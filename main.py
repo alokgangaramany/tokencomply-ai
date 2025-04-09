@@ -26,7 +26,7 @@ creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_json, scope)
 # 🚀 MAIN FUNCTION CALLED BY app.py
 def run_compliance_agents(name, id_number, country, is_accredited, offering):
     # 1️⃣ Define Agents
-    kyc_agent = Agent(
+        kyc_agent = Agent(
         role="KYC Specialist",
         goal="Verify the investor’s identity and risk status",
         backstory="You handle investor identity checks and simulate KYC outcomes.",
