@@ -9,8 +9,8 @@ import os
 import streamlit as st
 import os
 
-SUMSUB_APP_TOKEN = os.getenv("SUMSUB_APP_TOKEN", st.secrets["sumsub"]["app_token"])
-SUMSUB_SECRET_KEY = os.getenv("SUMSUB_SECRET_KEY", st.secrets["sumsub"]["secret_key"])
+SUMSUB_APP_TOKEN = st.secrets["sumsub"]["app_token"]
+SUMSUB_SECRET_KEY = st.secrets["sumsub"]["secret_key"]
 API_BASE = "https://api.sumsub.com"
 
 def create_signature(secret_key, endpoint, method="POST", ts=None):
