@@ -8,10 +8,17 @@ from oauth2client.service_account import ServiceAccountCredentials
 openai_api_key = st.secrets["OPENAI_API_KEY"]
 client = OpenAI(api_key=openai_api_key)
 
-# Load Google Service Account credentials from Streamlit secrets
-creds_dict = dict(st.secrets["gcp_service_account"])
-creds_json = json.loads(json.dumps(creds_dict))  # Convert to JSON-like format
 
+# Load and sanitize creds from Streamlit Secrets
+raw_creds = dict(st.secrets["gcp_service_account"])
+
+# Fix: Convert double backslashes to actual newlines in private_key
+raw_creds["private_key"] = raw_creds["private_key"].replace("\\n", "\n")
+
+# Convert to JSON-like object
+creds_json = json.loads(json.dumps(raw_creds))
+
+# Use it
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_json, scope)
 
