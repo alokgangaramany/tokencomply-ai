@@ -44,3 +44,18 @@ def generate_kyc_link(user_id: str):
     else:
         st.error("Failed to get WebSDK link")
         return None
+
+def check_kyc_status(user_id: str):
+    endpoint = f"/resources/applicants/{user_id}/requiredIdDocsStatus"
+    sig, ts = create_signature(SUMSUB_SECRET_KEY, endpoint, "GET")
+    headers = {
+        "X-App-Token": SUMSUB_APP_TOKEN,
+        "X-App-Access-Sig": sig,
+        "X-App-Access-Ts": ts
+    }
+    response = requests.get(API_BASE + endpoint, headers=headers)
+    if response.status_code == 200:
+        review = response.json()
+        return review.get("reviewStatus", "unknown")
+    else:
+        return "error"
