@@ -119,26 +119,30 @@ def run_compliance_agents(name, id_number, country, is_accredited, offering):
 
     return kyc_result, compliance_note, reg_memo, legal_memo
 
-# Setup Google Sheets connection
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
-    client = gspread.authorize(creds)
 
-    sheet = client.open("TokenComply Log").sheet1  # Your sheet name
+    # Optional: Log to Google Sheet (if working)
+    try:
+        import gspread
+        from datetime import datetime
 
+        gc = gspread.authorize(creds)
+        sheet = gc.open("TokenComply Log").sheet1
 
-# Insert the row
-    row = [
-         name,
-         id_number,
-         country,
-         is_accredited,
-         offering,
-         kyc_result,  # KYC output
-         compliance_note,  # Compliance note
-         reg_memo,  # Reg memo
-         legal_memo,  # Legal memo
-         datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-     ]
+        row = [
+            name,
+            id_number,
+            country,
+            is_accredited,
+            offering,
+            kyc_result,
+            compliance_note,
+            reg_memo,
+            legal_memo,
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        ]
 
-     sheet.append_row(row)
+        sheet.append_row(row)  # ✅ CORRECTLY INDENTED
+    except Exception as e:
+        print("📄 Google Sheets logging failed:", e)
+
+ 
