@@ -1,5 +1,5 @@
 openai
-crewai==0.5.51
+crewai==0.5.3
 streamlit
 python-dotenv
 gspread
