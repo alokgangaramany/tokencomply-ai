@@ -1,81 +1,56 @@
 import time
-import hmac
 import hashlib
-import base64
+import hmac
 import requests
+import uuid
 import streamlit as st
-from urllib.parse import urlencode
-import os
-
 
 SUMSUB_APP_TOKEN = st.secrets["sumsub"]["app_token"]
 SUMSUB_SECRET_KEY = st.secrets["sumsub"]["secret_key"]
 API_BASE = "https://api.sumsub.com"
 
 
+def sign_request(method, url, body):
+    ts = str(int(time.time()))
+    string_to_sign = ts + method.upper() + url + body
+    signature = hmac.new(SUMSUB_SECRET_KEY.encode(), string_to_sign.encode(), hashlib.sha256).hexdigest()
+    return signature, ts
+
 
 def generate_kyc_link(user_id):
-    app_token = st.secrets["sumsub"]["app_token"]
-    secret_key = st.secrets["sumsub"]["secret_key"]
-
-    endpoint = "/resources/applicants?levelName=basic-kyc-level"
-    ts = str(int(time.time()))
-    string_to_sign = ts + "POST" + endpoint
-
-    signature = base64.b64encode(
-        hmac.new(secret_key.encode(), string_to_sign.encode(), hashlib.sha256).digest()
-    ).decode()
+    url = f"{API_BASE}/resources/accessTokens?userId={user_id}&levelName=basic-kyc-level"
+    method = "POST"
+    body = ""
+    signature, ts = sign_request(method, url, body)
 
     headers = {
-        "X-App-Token": app_token,
+        "Content-Type": "application/json",
+        "X-App-Token": SUMSUB_APP_TOKEN,
         "X-App-Access-Sig": signature,
-        "X-App-Access-Ts": ts,
-        "Content-Type": "application/json"
+        "X-App-Access-Ts": ts
     }
 
-    body = {"externalUserId": user_id}
+    response = requests.post(url, headers=headers)
+    data = response.json()
 
-    try:
-        response = requests.post("https://api.sumsub.com" + endpoint, headers=headers, json=body)
-        print("🔍 STATUS:", response.status_code)
-        print("🔍 BODY:", response.text)
+    if response.status_code != 200 or "token" not in data:
+        raise Exception(f"Failed to get token: {data}")
 
-        if response.status_code == 200:
-            token = response.json()["token"]
-            return f"https://web-sdk.sumsub.com/check-in?accessToken={token}&externalUserId={user_id}"
-        else:
-            return None
-    except Exception as e:
-        print("❌ Exception while creating applicant:", e)
-        return None
+    token = data["token"]
+    return f"https://web.sumsub.com/idensic/mobile-sdk-link/#/access-token/{token}"
 
 
 def check_kyc_status(user_id):
-    app_token = st.secrets["sumsub"]["app_token"]
-    secret_key = st.secrets["sumsub"]["secret_key"]
-
-    endpoint = f"/resources/applicants/-;externalUserId={user_id}/status"
-    ts = str(int(time.time()))
-    string_to_sign = ts + "GET" + endpoint
-
-    signature = base64.b64encode(
-        hmac.new(secret_key.encode(), string_to_sign.encode(), hashlib.sha256).digest()
-    ).decode()
+    url = f"{API_BASE}/resources/applicants/-;externalUserId={user_id}/status"
+    method = "GET"
+    body = ""
+    signature, ts = sign_request(method, url, body)
 
     headers = {
-        "X-App-Token": app_token,
+        "X-App-Token": SUMSUB_APP_TOKEN,
         "X-App-Access-Sig": signature,
-        "X-App-Access-Ts": ts,
+        "X-App-Access-Ts": ts
     }
 
-    try:
-        response = requests.get("https://api.sumsub.com" + endpoint, headers=headers)
-        print("📦 KYC STATUS RESPONSE:", response.status_code, response.text)
-
-        if response.status_code == 200:
-            return response.json().get("review", {}).get("reviewResult", {}).get("reviewAnswer", "pending")
-        else:
-            return "error"
-    except Exception as e:
-        print("❌ Exception while checking status:", e)
-        return "error"
+    response = requests.get(url, headers=headers)
+    return response.json()
