@@ -1,77 +1,57 @@
-import streamlit as st
 import json
-from openai import OpenAI
+import streamlit as st
+from datetime import datetime
 from crewai import Agent, Task, Crew
+from openai import OpenAI
+
+# Google Sheets
+import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
-# Load secrets
-creds_dict = dict(st.secrets["gcp_service_account"])
-
-# 🔥 Fix the key: convert escaped \\n into real line breaks
-if "\\n" in creds_dict["private_key"]:
-    creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
-
-# ✅ Parse the JSON with real line breaks
-creds_json = json.loads(json.dumps(creds_dict))
-
-# Setup auth scopes
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-
-# Authorize Google Sheets
-creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_json, scope)
-
-
-# 🚀 MAIN FUNCTION CALLED BY app.py
-import streamlit as st
-import json
-from openai import OpenAI
-from crewai import Agent, Task, Crew
-from oauth2client.service_account import ServiceAccountCredentials
-
-# Load OpenAI API Key from Streamlit secrets
+# --- SETUP OPENAI CLIENT ---
 openai_api_key = st.secrets["OPENAI_API_KEY"]
 client = OpenAI(api_key=openai_api_key)
 
-# Load Google Service Account credentials from Streamlit secrets
+# --- FIXED GOOGLE CREDS LOADING ---
 creds_dict = dict(st.secrets["gcp_service_account"])
-creds_json = json.loads(json.dumps(creds_dict))  # Convert to JSON-like format
-
+if "\\n" in creds_dict["private_key"]:
+    creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+creds_json = json.loads(json.dumps(creds_dict))
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_json, scope)
 
-
-# 🚀 MAIN FUNCTION CALLED BY app.py
+# --- FUNCTION TO RUN AGENTS ---
 def run_compliance_agents(name, id_number, country, is_accredited, offering):
-    # 1️⃣ Define Agents
+    # Define agents
     kyc_agent = Agent(
         role="KYC Specialist",
-        goal="Verify the investor’s identity and risk status",
-        backstory="You handle investor identity checks and simulate KYC outcomes.",
-        verbose=True
+        goal="Verify the investor's identity and simulate KYC status",
+        backstory="You handle KYC checks in a fast, simulated environment.",
+        verbose=False
     )
 
     compliance_agent = Agent(
         role="Compliance Officer",
-        goal="Write a compliance note explaining investor status and next steps",
-        backstory="You provide a formal compliance assessment based on KYC status.",
-        verbose=True
+        goal="Write a professional compliance note",
+        backstory="You summarize KYC and regulatory observations in a memo.",
+        verbose=False
     )
 
     reg_agent = Agent(
-        role="Regulatory Advisor",
-        goal="Determine investor eligibility under Reg D or Reg S",
-        backstory="You match investors with applicable US securities regulations.",
-        verbose=True
+        role="Regulatory Analyst",
+        goal="Determine eligibility under Reg D or Reg S",
+        backstory="You interpret basic inputs to simulate investor eligibility.",
+        verbose=False
     )
 
     legal_agent = Agent(
-        role="Legal Document Drafter",
-        goal="Generate a legal summary memo for the investor's subscription agreement",
-        backstory="You draft professional legal memos based on compliance decisions.",
-        verbose=True
+        role="Legal Drafter",
+        goal="Write a legal summary for investor agreements",
+        backstory="You translate compliance and regulatory outputs into a clean legal memo.",
+        verbose=False
     )
 
-    # 2️⃣ Define Tasks with return_value=True
+    # Define tasks
     task1 = Task(
         description=f"Perform a KYC check for investor {name} with ID {id_number}. Return status: approved, flagged, or pending.",
         agent=kyc_agent,
@@ -82,50 +62,38 @@ def run_compliance_agents(name, id_number, country, is_accredited, offering):
     task2 = Task(
         description=f"Based on the KYC status, write a formal compliance note for investor {name}.",
         agent=compliance_agent,
-        expected_output="A 2-3 sentence professional compliance summary.",
+        expected_output="Professional compliance note.",
         return_value=True
     )
 
     task3 = Task(
-        description=f"Investor {name} is from {country}, is {'accredited' if is_accredited == 'yes' else 'non-accredited'}, and is applying under {offering}. Determine if they are eligible under Reg D or Reg S and explain why.",
+        description=f"Investor {name} is from {country}, is {'' if is_accredited == 'yes' else 'not '}accredited, and applying under {offering}. Determine if they are eligible under Reg D or Reg S.",
         agent=reg_agent,
-        expected_output="Eligibility explanation with regulatory reasoning.",
+        expected_output="Regulatory eligibility explanation",
         return_value=True
     )
 
     task4 = Task(
-        description=f"Write a legal memo suitable for a subscription agreement. Investor: {name}, ID: {id_number}, Country: {country}, Accredited: {is_accredited}, Offering: {offering}. Summarize KYC and regulatory findings.",
+        description=f"Write a legal memo summarizing investor {name}'s KYC and regulation status for inclusion in a subscription agreement.",
         agent=legal_agent,
-        expected_output="A formal legal summary paragraph for inclusion in investment documents.",
+        expected_output="Legal summary paragraph",
         return_value=True
     )
 
-    # 3️⃣ Create and Run the Crew
-    crew = Crew(
-        agents=[kyc_agent, compliance_agent, reg_agent, legal_agent],
-        tasks=[task1, task2, task3, task4],
-        verbose=False
-    )
-
+    # Run crew
+    crew = Crew(agents=[kyc_agent, compliance_agent, reg_agent, legal_agent], tasks=[task1, task2, task3, task4], verbose=False)
     crew.kickoff()
 
-    # 4️⃣ Extract Outputs
-    kyc_result = str(task1.output)
-    compliance_note = str(task2.output)
-    reg_memo = str(task3.output)
-    legal_memo = str(task4.output)
+    # Extract results
+    kyc_result = task1.output.result
+    compliance_note = task2.output.result
+    reg_memo = task3.output.result
+    legal_memo = task4.output.result
 
-    return kyc_result, compliance_note, reg_memo, legal_memo
-
-
-    # Optional: Log to Google Sheet (if working)
+    # Optional: Log to Google Sheet
     try:
-        import gspread
-        from datetime import datetime
-
         gc = gspread.authorize(creds)
-        sheet = gc.open("TokenComply Log").sheet1
-
+        sheet = gc.open("TokenComply Results").sheet1
         row = [
             name,
             id_number,
@@ -138,9 +106,8 @@ def run_compliance_agents(name, id_number, country, is_accredited, offering):
             legal_memo,
             datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         ]
-
-        sheet.append_row(row)  # ✅ CORRECTLY INDENTED
+        sheet.append_row(row)
     except Exception as e:
-        print("📄 Google Sheets logging failed:", e)
+        print("Google Sheets logging failed:", e)
 
- 
+    return kyc_result, compliance_note, reg_memo, legal_memo
