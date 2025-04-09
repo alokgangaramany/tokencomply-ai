@@ -116,104 +116,99 @@ Use formal language.
 
 # Define Agents
 
-kyc_agent = Agent(
-    role="KYC Specialist",
-    goal="Verify the investor’s identity and risk status",
-    backstory="You are responsible for checking ID numbers and simulating basic KYC results.",
-    verbose=True
-)
+ef run_compliance_agents(name, id_number, country, is_accredited, offering):
+    from crewai import Agent, Task, Crew
 
-compliance_agent = Agent(
-    role="Compliance Officer",
-    goal="Write a compliance note explaining the investor's status and next steps",
-    backstory="You analyze the investor’s KYC result and suggest action in legal language.",
-    verbose=True
-)
+    kyc_agent = Agent(
+        role="KYC Specialist",
+        goal="Verify the investor’s identity and risk status",
+        backstory="You are responsible for KYC verification.",
+        verbose=True
+    )
 
-reg_agent = Agent(
-    role="Regulatory Advisor",
-    goal="Determine eligibility under Reg D or Reg S based on investor info",
-    backstory="You evaluate the investor's jurisdiction and accreditation status to determine the appropriate offering framework.",
-    verbose=True
-)
+    compliance_agent = Agent(
+        role="Compliance Officer",
+        goal="Write a compliance note explaining the investor's status",
+        backstory="You ensure investors are compliant with local and global laws.",
+        verbose=True
+    )
 
-legal_agent = Agent(
-    role="Legal Document Drafter",
-    goal="Generate a subscription agreement summary based on compliance info",
-    backstory="You are a legal assistant responsible for preparing formal investor documentation. You specialize in translating compliance data into proper legal memos.",
-    verbose=True
-)
+    reg_agent = Agent(
+        role="Regulatory Advisor",
+        goal="Determine eligibility under Reg D or Reg S",
+        backstory="You analyze investor status to determine correct offering structure.",
+        verbose=True
+    )
 
+    legal_agent = Agent(
+        role="Legal Document Drafter",
+        goal="Generate a legal memo for inclusion in a subscription agreement",
+        backstory="You write formal investor summaries and legal memos.",
+        verbose=True
+    )
 
-# Inputs (pretend user flow)
-name = input("Enter investor name: ")
-id_number = input("Enter ID number (try 12345 or 67890): ")
-country = input("Enter country: ")
-is_accredited = input("Is the investor accredited? (yes/no): ").lower()
-offering = input("Offering type (RegD/RegS): ").upper()
+    task1 = Task(
+        description=f"KYC check for {name} ({id_number})",
+        agent=kyc_agent,
+        expected_output="Approved, flagged, or pending",
+        return_value=True
+    )
 
-# Define Tasks
+    task2 = Task(
+        description=f"Compliance note for investor {name} after KYC check",
+        agent=compliance_agent,
+        expected_output="Brief note on KYC result and next steps",
+        return_value=True
+    )
 
-task1 = Task(
-    description=f"Simulate a KYC check for investor {name} with ID {id_number}. Check if ID is 'approved', 'flagged', or 'pending'.",
-    agent=kyc_agent,
-    expected_output="A single word output: approved, flagged, pending, or not found.",
-    return_value=True
-)
+    task3 = Task(
+        description=f"Determine Reg D/Reg S eligibility for {name}, {country}, accredited: {is_accredited}, offering: {offering}",
+        agent=reg_agent,
+        expected_output="Regulatory eligibility and explanation",
+        return_value=True
+    )
 
-task2 = Task(
-    description=f"Based on the KYC result for {name}, write a short compliance note explaining the status.",
-    agent=compliance_agent,
-    expected_output="A 2-3 sentence compliance note in formal tone.",
-    return_value=True
-)
+    task4 = Task(
+        description=f"Legal memo for {name}, summarizing KYC and regulatory check",
+        agent=legal_agent,
+        expected_output="Professional legal summary paragraph",
+        return_value=True
+    )
 
-task3 = Task(
-    description=f"The investor is from {country}, {'accredited' if is_accredited == 'yes' else 'non-accredited'}, and the offering is under {offering}. Determine if they are eligible under Reg D or Reg S and explain why.",
-    agent=reg_agent,
-    expected_output="A regulatory eligibility summary with next steps.",
-    return_value=True
-)
+    crew = Crew(
+        agents=[kyc_agent, compliance_agent, reg_agent, legal_agent],
+        tasks=[task1, task2, task3, task4],
+        verbose=False
+    )
 
-task4 = Task(
-    description=f"""Create a legal memo for investor {name} (ID: {id_number}) from {country}, who is {'accredited' if is_accredited == 'yes' else 'non-accredited'}, and is applying under {offering}.
-
-Write a legal-style paragraph suitable for use in a subscription agreement. Summarize their KYC status and regulatory eligibility for tokenized securities.""",
-    agent=legal_agent,
-    expected_output="A professional legal memo paragraph suitable for inclusion in formal investment documentation.",
-    return_value=True
-)
-
-# Launch Crew
-crew = Crew(
-    agents=[kyc_agent, compliance_agent, reg_agent, legal_agent],
-    tasks=[task1, task2, task3, task4],
-    verbose=True
-)
-
-result = crew.kickoff()
-
-
-kyc_result = str(task1.output)
-compliance_note = str(task2.output)
-reg_memo = str(task3.output)
-legal_memo = str(task4.output)
-
-
-
-def run_compliance_agents(name, id_number, country, is_accredited, offering):
-    # Your agent/task setup code goes here as before
-
-    # Run the crew
     crew.kickoff()
 
-    # Extract outputs
-    kyc = str(task1.output)
-    compliance = str(task2.output)
-    reg = str(task3.output)
-    legal = str(task4.output)
+    return str(task1.output), str(task2.output), str(task3.output), str(task4.output)
 
-    return kyc, compliance, reg, legal
+
+# result = crew.kickoff()
+
+
+# kyc_result = str(task1.output)
+# compliance_note = str(task2.output)
+# reg_memo = str(task3.output)
+# legal_memo = str(task4.output)
+
+
+
+# def run_compliance_agents(name, id_number, country, is_accredited, offering):
+#     # Your agent/task setup code goes here as before
+
+#     # Run the crew
+#     crew.kickoff()
+
+#     # Extract outputs
+#     kyc = str(task1.output)
+#     compliance = str(task2.output)
+#     reg = str(task3.output)
+#     legal = str(task4.output)
+
+#     return kyc, compliance, reg, legal
 
 #print("\n🧠 DEBUG: Crew result type:", type(result))
 #print("🧠 DEBUG: Crew result value:", result)
