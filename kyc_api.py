@@ -23,7 +23,7 @@ def sign_request(method, path, body):
 
 
 def generate_kyc_link(user_id):
-    path = f"/resources/accessTokens?userId={user_id}&levelName=basic-kyc-level"
+    path = f"/resources/accessTokens?userId={user_id}&levelName=id-and-liveness"
     url = API_BASE + path
 
     payload = {
