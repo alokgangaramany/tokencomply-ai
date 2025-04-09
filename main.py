@@ -24,9 +24,28 @@ creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_json, scope)
 
 
 # 🚀 MAIN FUNCTION CALLED BY app.py
+import streamlit as st
+import json
+from openai import OpenAI
+from crewai import Agent, Task, Crew
+from oauth2client.service_account import ServiceAccountCredentials
+
+# Load OpenAI API Key from Streamlit secrets
+openai_api_key = st.secrets["OPENAI_API_KEY"]
+client = OpenAI(api_key=openai_api_key)
+
+# Load Google Service Account credentials from Streamlit secrets
+creds_dict = dict(st.secrets["gcp_service_account"])
+creds_json = json.loads(json.dumps(creds_dict))  # Convert to JSON-like format
+
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_json, scope)
+
+
+# 🚀 MAIN FUNCTION CALLED BY app.py
 def run_compliance_agents(name, id_number, country, is_accredited, offering):
     # 1️⃣ Define Agents
-        kyc_agent = Agent(
+    kyc_agent = Agent(
         role="KYC Specialist",
         goal="Verify the investor’s identity and risk status",
         backstory="You handle investor identity checks and simulate KYC outcomes.",
@@ -93,10 +112,10 @@ def run_compliance_agents(name, id_number, country, is_accredited, offering):
     crew.kickoff()
 
     # 4️⃣ Extract Outputs
-    kyc_result = task1.output.result
-    compliance_note = task2.output.result
-    reg_memo = task3.output.result
-    legal_memo = task4.output.result
+    kyc_result = str(task1.output)
+    compliance_note = str(task2.output)
+    reg_memo = str(task3.output)
+    legal_memo = str(task4.output)
 
     return kyc_result, compliance_note, reg_memo, legal_memo
 
