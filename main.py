@@ -93,7 +93,7 @@ def run_compliance_agents(name, id_number, country, is_accredited, offering):
     # Optional: Log to Google Sheet
     try:
         gc = gspread.authorize(creds)
-        sheet = gc.open("TokenComply Results").sheet1
+        sheet = gc.open("TokenComply Log").sheet1
         row = [
             name,
             id_number,
@@ -108,6 +108,7 @@ def run_compliance_agents(name, id_number, country, is_accredited, offering):
         ]
         sheet.append_row(row)
     except Exception as e:
-        print("Google Sheets logging failed:", e)
+        st.error(f"📄 Google Sheets logging failed: {e}")
+        print("📄 Google Sheets logging failed:", e)
 
     return kyc_result, compliance_note, reg_memo, legal_memo
