@@ -4,24 +4,20 @@ from openai import OpenAI
 from crewai import Agent, Task, Crew
 from oauth2client.service_account import ServiceAccountCredentials
 
-# Load OpenAI API Key from Streamlit secrets
-openai_api_key = st.secrets["OPENAI_API_KEY"]
-client = OpenAI(api_key=openai_api_key)
-
-
 # Load secrets
 creds_dict = dict(st.secrets["gcp_service_account"])
 
-# 🔥 Critical Fix: convert "\\n" to real newlines
-creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+# 🔥 Fix the key: convert escaped \\n into real line breaks
+if "\\n" in creds_dict["private_key"]:
+    creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
 
-# Convert to JSON-like format
+# ✅ Parse the JSON with real line breaks
 creds_json = json.loads(json.dumps(creds_dict))
 
-# Auth scope
+# Setup auth scopes
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 
-# ✅ THIS LINE will now succeed
+# Authorize Google Sheets
 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_json, scope)
 
 
