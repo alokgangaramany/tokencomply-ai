@@ -5,7 +5,7 @@ from main import run_compliance_agents
 # from persona_api import create_inquiry, check_inquiry_status
 import time
 import urllib.parse
-from persona_api import generate_persona_flow_url 
+from persona_api import generate_persona_url 
 
 PERSONA_API_KEY = st.secrets["persona"]["api_key"]
 TEMPLATE_ID = st.secrets["persona"]["template_id"]
