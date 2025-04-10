@@ -36,8 +36,6 @@ if submitted:
             st.markdown("#### Or complete verification below:")
             st.components.v1.iframe(kyc_url, height=600)
            
-            else:
-                st.error("❌ Failed to create inquiry.")
     else:
         with st.spinner("Running agentic compliance checks..."):
             try:
