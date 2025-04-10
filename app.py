@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import datetime
 from main import run_compliance_agents
-from kyc_api import generate_kyc_link, check_kyc_status
+# from kyc_api import generate_kyc_link, check_kyc_status
 from persona_api import create_inquiry, check_inquiry_status
 import time
 
