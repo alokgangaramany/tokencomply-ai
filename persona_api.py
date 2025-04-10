@@ -2,6 +2,7 @@
 
 import requests
 import streamlit as st
+import uuid
 
 PERSONA_API_KEY = st.secrets["persona"]["api_key"]
 TEMPLATE_ID = st.secrets["persona"]["template_id"]
