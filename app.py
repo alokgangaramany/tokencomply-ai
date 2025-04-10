@@ -16,6 +16,7 @@ use_real_kyc = st.checkbox("🔐 Use real KYC via Persona")
 
 with st.form("investor_form"):
     name = st.text_input("Investor Name")
+    email = st.text_input("Email Address") 
     id_number = st.text_input("ID Number")
     country = st.text_input("Country (e.g., US, India)")
     accredited = st.radio("Is the investor accredited?", ["yes", "no"])
