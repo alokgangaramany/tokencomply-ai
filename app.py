@@ -29,12 +29,12 @@ with st.form("investor_form"):
 
 if submitted:
     if use_real_kyc:
-    with st.spinner("🔗 Generating KYC verification link..."):
-        kyc_url = generate_persona_url(TEMPLATE_ID, name, email)
-        st.success("✅ KYC verification ready")
-        st.markdown(f"[Click here to verify →]({kyc_url})", unsafe_allow_html=True)
-        st.markdown("#### Or complete verification below:")
-        st.components.v1.iframe(kyc_url, height=600)
+        with st.spinner("🔗 Generating KYC verification link..."):
+            kyc_url = generate_persona_url(TEMPLATE_ID, name, email)
+            st.success("✅ KYC verification ready")
+            st.markdown(f"[Click here to verify →]({kyc_url})", unsafe_allow_html=True)
+            st.markdown("#### Or complete verification below:")
+            st.components.v1.iframe(kyc_url, height=600)
            
             else:
                 st.error("❌ Failed to create inquiry.")
