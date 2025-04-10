@@ -1,7 +1,10 @@
+# persona_api.py
+
 import requests
 import streamlit as st
 
 PERSONA_API_KEY = st.secrets["persona"]["api_key"]
+TEMPLATE_ID = st.secrets["persona"]["template_id"]
 HEADERS = {
     "Authorization": f"Bearer {PERSONA_API_KEY}",
     "Content-Type": "application/json"
@@ -9,26 +12,27 @@ HEADERS = {
 
 def create_inquiry(name, email):
     url = "https://withpersona.com/api/v1/inquiries"
-    data = {
+    payload = {
         "data": {
             "type": "inquiry",
             "attributes": {
-                "template-id": "tmpl_inWKMrzDKYbePHd3Xy6cMeV9xmcA",  # Optional but recommended
-                "name-first": name.split()[0],
-                "name-last": name.split()[-1] if len(name.split()) > 1 else "",
-                "email-address": email
+                "template_id": TEMPLATE_ID,
+                "environment": "sandbox",
+                "prefill": {
+                    "name": name,
+                    "email": email
+                }
             }
         }
     }
 
-    response = requests.post(url, headers=HEADERS, json=data)
+    response = requests.post(url, json=payload, headers=HEADERS)
     if response.status_code == 201:
         return response.json()["data"]["id"]
     else:
-        st.error("Failed to create inquiry")
-        st.write(response.text)
+        st.error(f"❌ Failed to create inquiry.\n\n{response.text}")
         return None
-
+        
 def check_inquiry_status(inquiry_id):
     url = f"https://withpersona.com/api/v1/inquiries/{inquiry_id}"
     response = requests.get(url, headers=HEADERS)
