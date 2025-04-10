@@ -30,7 +30,15 @@ if submitted:
             inquiry_id = create_inquiry(name, email)
             if inquiry_id:
                 st.success(f"Inquiry created ✅ ID: `{inquiry_id}`")
-                st.caption("This ID will be used to check status or embed verification.")
+                st.caption("This ID will be used to check status or embed verification.") 
+                st.markdown("#### Complete KYC below:")
+                st.markdown(
+                    f"""
+                    <iframe src="https://withpersona.com/inquiry/{inquiry_id}" width="100%" height="600" frameborder="0"></iframe>
+                    """,
+                    unsafe_allow_html=True
+                )
+           
             else:
                 st.error("❌ Failed to create inquiry.")
     else:
