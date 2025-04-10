@@ -2,10 +2,13 @@ import streamlit as st
 from datetime import datetime
 from main import run_compliance_agents
 # from kyc_api import generate_kyc_link, check_kyc_status
-from persona_api import create_inquiry, check_inquiry_status
+# from persona_api import create_inquiry, check_inquiry_status
 import time
+import urllib.parse
+from persona_api import generate_persona_flow_url 
 
-
+PERSONA_API_KEY = st.secrets["persona"]["api_key"]
+TEMPLATE_ID = st.secrets["persona"]["template_id"]
 
 st.set_page_config(page_title="TokenComply AI", layout="centered")
 st.title("🧠 TokenComply AI Onboarding")
@@ -26,18 +29,12 @@ with st.form("investor_form"):
 
 if submitted:
     if use_real_kyc:
-        with st.spinner("🕵️ Creating KYC inquiry..."):
-            inquiry_id = create_inquiry(name, email)
-            if inquiry_id:
-                st.success(f"Inquiry created ✅ ID: `{inquiry_id}`")
-                st.caption("This ID will be used to check status or embed verification.") 
-                st.markdown("#### Complete KYC below:")
-                st.markdown(
-                    f"""
-                    <iframe src="https://withpersona.com/inquiry/{inquiry_id}" width="100%" height="600" frameborder="0"></iframe>
-                    """,
-                    unsafe_allow_html=True
-                )
+    with st.spinner("🔗 Generating KYC verification link..."):
+        kyc_url = generate_persona_url(TEMPLATE_ID, name, email)
+        st.success("✅ KYC verification ready")
+        st.markdown(f"[Click here to verify →]({kyc_url})", unsafe_allow_html=True)
+        st.markdown("#### Or complete verification below:")
+        st.components.v1.iframe(kyc_url, height=600)
            
             else:
                 st.error("❌ Failed to create inquiry.")
