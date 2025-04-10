@@ -44,7 +44,7 @@ def generate_kyc_link(user_id):
 
     token = data["token"]
 #    return f"https://web.sumsub.com/idensic/mobile-sdk-link/#/access-token/{token}"
-    return f"https://static.sumsub.com/idensic/#/access-token/{token}"
+    return f"https://web.sumsub.com/idensic/#/access-token/{token}"
 
 
 def check_kyc_status(user_id):
