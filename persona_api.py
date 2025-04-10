@@ -13,7 +13,7 @@ def create_inquiry(name, email):
         "data": {
             "type": "inquiry",
             "attributes": {
-                "template-id": "your-template-id",  # Optional but recommended
+                "template-id": "itmpl_inWKMrzDKYbePHd3Xy6cMeV9xmcA",  # Optional but recommended
                 "name-first": name.split()[0],
                 "name-last": name.split()[-1] if len(name.split()) > 1 else "",
                 "email-address": email
