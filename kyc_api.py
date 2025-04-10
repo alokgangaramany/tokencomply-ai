@@ -1,68 +1,52 @@
-import time
-import hashlib
-import hmac
 import requests
-import uuid
 import json
 import streamlit as st
 
-SUMSUB_APP_TOKEN = st.secrets["sumsub"]["app_token"]
-SUMSUB_SECRET_KEY = st.secrets["sumsub"]["secret_key"]
-API_BASE = "https://api.sumsub.com"
+# Load Persona API key from Streamlit secrets
+PERSONA_API_KEY = st.secrets["persona"]["api_key"]
+TEMPLATE_ID =  st.secrets["persona"]["template_id"]
 
+API_BASE = "https://withpersona.com/api/v1"
 
-def sign_request(method, path, body=""):
-    ts = str(int(time.time()))
-    string_to_sign = ts + method.upper() + path + body
-    signature = hmac.new(
-        SUMSUB_SECRET_KEY.encode(),
-        string_to_sign.encode(),
-        hashlib.sha256
-    ).hexdigest()
-    return signature, ts
-
-
-def generate_kyc_link(user_id):
-    path = f"/resources/accessTokens?userId={user_id}&levelName=id-and-liveness"
-    method = "POST"
-    body = ""
-
-    signature, ts = sign_request(method, path, body)
-
+def create_inquiry():
+    url = f"{API_BASE}/inquiries"
     headers = {
-        "X-App-Token": SUMSUB_APP_TOKEN,
-        "X-App-Access-Sig": signature,
-        "X-App-Access-Ts": ts
+        "Authorization": f"Bearer {PERSONA_API_KEY}",
+        "Content-Type": "application/json"
     }
 
-    url = API_BASE + path
-    response = requests.post(url, headers=headers)
-    data = response.json()
-
-    if response.status_code != 200 or "token" not in data:
-        raise Exception(f"Failed to get token: {data}")
-
-    token = data["token"]
-#    return f"https://web.sumsub.com/idensic/mobile-sdk-link/#/access-token/{token}"
-    return f"https://web.sumsub.com/idensic/#/access-token/{token}"
-
-
-def check_kyc_status(user_id):
-    if not user_id:
-        raise ValueError("User ID must be provided for status check.")
-
-    path = f"/resources/applicants/-;externalUserId={user_id}/status"
-    method = "GET"
-    body = ""
-
-    signature, ts = sign_request(method, path, body)
-
-    headers = {
-        "X-App-Token": SUMSUB_APP_TOKEN,
-        "X-App-Access-Sig": signature,
-        "X-App-Access-Ts": ts
+    payload = {
+        "data": {
+            "type": "inquiry",
+            "attributes": {
+                "template_id": TEMPLATE_ID
+            }
+        }
     }
 
-    url = API_BASE + path
+    response = requests.post(url, headers=headers, data=json.dumps(payload))
+
+    if response.status_code == 201:
+        data = response.json()
+        inquiry_id = data["data"]["id"]
+        return inquiry_id
+    else:
+        st.error("❌ Failed to create inquiry.")
+        st.json(response.json())
+        return None
+
+
+def get_inquiry_status(inquiry_id):
+    url = f"{API_BASE}/inquiries/{inquiry_id}"
+    headers = {
+        "Authorization": f"Bearer {PERSONA_API_KEY}"
+    }
+
     response = requests.get(url, headers=headers)
-    return response.json()
+
+    if response.status_code == 200:
+        return response.json()
+    else:
+        st.error("❌ Failed to fetch inquiry status.")
+        st.json(response.json())
+        return None
