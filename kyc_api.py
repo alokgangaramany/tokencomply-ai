@@ -8,7 +8,7 @@ TEMPLATE_ID =  st.secrets["persona"]["template_id"]
 
 API_BASE = "https://withpersona.com/api/v1"
 
-def create_inquiry():
+def create_inquiry(name, email):
     url = f"{API_BASE}/inquiries"
     headers = {
         "Authorization": f"Bearer {PERSONA_API_KEY}",
