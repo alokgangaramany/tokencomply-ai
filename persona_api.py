@@ -12,7 +12,7 @@ HEADERS = {
     "Content-Type": "application/json"
 }
 
-def generate_persona_flow_url(itmpl_id, name, email):
+def generate_persona_url(itmpl_id, name, email):
     # This URL uses the inquiry template to auto-create the inquiry when loaded
     return f"https://withpersona.com/verify?template-id={itmpl_id}&prefill[name]={name}&prefill[email]={email}"
 
